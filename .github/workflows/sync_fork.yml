@@ -1,0 +1,30 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync branches
+        run: |
+          git remote add upstream https://github.com/zed-industries/zed.git
+          git fetch upstream main
+
+          # Sync upstream-main (perfect mirror)
+          git checkout -B upstream-main upstream/main
+          git push -f origin upstream-main
+
+          # Rebase main on top of upstream (keeps workflow commit on top)
+          git checkout main
+          git rebase upstream/main
+          git push -f origin main
